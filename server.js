@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -8,11 +9,19 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json()); // Pentru a putea citi JSON din request-uri
 
-// Rută de test
+// Configurăm serverul să servească fișiere statice (HTML, CSS, JS, Imagini) din folderul "public"
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Rută pentru interfața web (Prototipul Sakura)
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Am mutat mesajul de succes pe un endpoint de API separat
+app.get('/api/status', (req, res) => {
     res.json({ 
         status: "success", 
-        message: "🌸 Serverul Sakura funcționează perfect în Podman!" 
+        message: "🌸 Backend-ul Sakura funcționează perfect!" 
     });
 });
 

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sakura Prototype</title>
+    <style>
+        :root {
+            --accent-color: #bb86fc;
+            --accent-rgb: 187, 134, 252;
+            --glass-bg: rgba(30, 30, 30, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --tree-trunk: #3e2723;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+            width: 90%;
+            max-width: 1000px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Dashboard / Controls */
+        .dashboard {
+            flex: 1;
+            min-width: 300px;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h2 { margin-top: 0; color: #fff; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; }
+        
+        .input-group { display: flex; gap: 10px; }
+        input[type="text"] {
+            flex: 1; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #444; 
+            color: #fff; border-radius: 8px; outline: none; transition: border 0.3s;
+        }
+        input[type="text"]:focus { border-color: var(--accent-color); }
+        
+        button {
+            background: var(--accent-color); color: #000; font-weight: bold; border: none;
+            padding: 10px 15px; border-radius: 8px; cursor: pointer; transition: transform 0.2s, background 0.2s;
+        }
+        button:hover { transform: scale(1.05); background: #d0a8ff; }
+        button:disabled { background: #555; color: #888; cursor: not-allowed; transform: none; }
+
+        /* Task Items */
+        .task-list { display: flex; flex-direction: column; gap: 12px; }
+        .task-item {
+            background: rgba(255,255,255,0.05); border-left: 4px solid var(--accent-color);
+            padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .task-info { display: flex; flex-direction: column; gap: 4px; }
+        .task-name { font-weight: bold; color: #fff; }
+        .task-streak { font-size: 0.85em; color: #aaa; }
+        .btn-complete { background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color); }
+        .btn-complete:hover { background: rgba(187, 134, 252, 0.2); }
+        .btn-complete.done { background: #4caf50; border-color: #4caf50; color: #000; }
+
+        /* Tree Area */
+        .tree-area {
+            flex: 1;
+            min-width: 350px;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        .trunk {
+            width: 70px; height: 280px; background: var(--tree-trunk);
+            border-radius: 15px 15px 0 0; position: relative;
+            box-shadow: inset -10px 0 20px rgba(0,0,0,0.5);
+        }
+
+        .face {
+            position: absolute; top: 40%; left: 50%; transform: translateX(-50%);
+            font-size: 28px; text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .branch {
+            position: absolute; background: var(--tree-trunk); height: 18px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: flex-end; padding-right: 5px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: inset -5px 0 10px rgba(0,0,0,0.3);
+        }
+
+        /* 6 Default Branch Positions */
+        .branch-0 { width: 140px; top: 30px; left: -120px; transform: rotate(-25deg); }
+        .branch-1 { width: 120px; top: 70px; right: -100px; transform: rotate(20deg); }
+        .branch-2 { width: 150px; top: 120px; left: -130px; transform: rotate(-15deg); }
+        .branch-3 { width: 130px; top: 150px; right: -110px; transform: rotate(15deg); }
+        .branch-4 { width: 100px; top: 200px; left: -80px; transform: rotate(-5deg); }
+        .branch-5 { width: 110px; top: 220px; right: -90px; transform: rotate(10deg); }
+
+        .element { font-size: 26px; transform: rotate(15deg); filter: drop-shadow(0 0 8px rgba(255,255,255,0.4)); }
+        
+        .post-it {
+            position: absolute; background: rgba(30,30,30,0.8); border: 1px solid var(--glass-border);
+            padding: 3px 6px; font-size: 11px; color: #fff; border-radius: 4px;
+            left: 10px; top: -25px; transform: rotate(-10deg); white-space: nowrap;
+        }
+
+        .dev-tools {
+            margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--glass-border);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Control Dashboard -->
+        <div class="glass-panel dashboard">
+            <h2>Your Routines (Max 6)</h2>
+            <div class="input-group">
+                <input type="text" id="taskName" placeholder="Ex: Gym, Reading, Coding" onkeypress="if(event.key === 'Enter') addTask()">
+                <button onclick="addTask()">Add</button>
+            </div>
+            
+            <div class="task-list" id="taskList">
+                <div style="text-align:center; color:#888; font-size:0.9em; margin-top:10px;">No routines added yet.</div>
+            </div>
+
+            <!-- Developer / Simulation Tools -->
+            <div class="dev-tools">
+                <div style="color: #bbb; font-size: 0.9em; margin-bottom: 10px;">
+                    Current Day: <strong id="dayDisplay" style="color: var(--accent-color);">1</strong>
+                </div>
+                <button onclick="simulateNextDay()" style="width: 100%; background: transparent; border: 1px dashed var(--accent-color); color: var(--accent-color);">
+                    ⏩ Simulate Next Day (00:00 Reset)
+                </button>
+            </div>
+        </div>
+
+        <!-- Visual Tree -->
+        <div class="glass-panel tree-area">
+            <div class="trunk" id="treeTrunk">
+                <div class="face" id="treeFace">😴</div>
+                <!-- Branches dynamically injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tasks = [];
+        let currentDay = 1;
+
+        function updateUI() {
+            const taskList = document.getElementById('taskList');
+            const trunk = document.getElementById('treeTrunk');
+            const face = document.getElementById('treeFace');
+            
+            // Clear current UI elements
+            taskList.innerHTML = '';
+            Array.from(trunk.children).forEach(child => {
+                if(child.id !== 'treeFace') trunk.removeChild(child);
+            });
+
+            if(tasks.length === 0) {
+                taskList.innerHTML = '<div style="text-align:center; color:#888; font-size:0.9em; margin-top:10px;">No routines added yet.</div>';
+                face.innerText = '😴';
+                return;
+            }
+
+            let allCompletedToday = true;
+
+            tasks.forEach((task, index) => {
+                if(!task.completedToday) allCompletedToday = false;
+
+                // 1. Render Task Buttons
+                const taskEl = document.createElement('div');
+                taskEl.className = 'task-item';
+                taskEl.innerHTML = `
+                    <div class="task-info">
+                        <span class="task-name">${task.name}</span>
+                        <span class="task-streak">Streak: ${task.streak} ${task.streak === 1 ? 'day' : 'days'}</span>
+                    </div>
+                    <button class="btn-complete ${task.completedToday ? 'done' : ''}" onclick="completeTask(${index})" ${task.completedToday ? 'disabled' : ''}>
+                        ${task.completedToday ? 'Done ✓' : 'Water 💧'}
+                    </button>
+                `;
+                taskList.appendChild(taskEl);
+
+                // 2. Render Branches
+                const branch = document.createElement('div');
+                branch.className = `branch branch-${index}`;
+                
+                let visual = '';
+                if(task.streak >= 20) visual = '🍒';
+                else if(task.streak >= 10) visual = '🌸';
+                else if(task.streak > 0) visual = '🌱';
+                else visual = '🍂'; // Just died/withered
+
+                branch.innerHTML = `
+                    <div class="post-it">${task.name}</div>
+                    <div class="element">${visual}</div>
+                `;
+                trunk.appendChild(branch);
+            });
+
+            // Update Face Logic
+            if (allCompletedToday) face.innerText = '😊';
+            else if (tasks.some(t => t.streak === 0 && !t.completedToday)) face.innerText = '😢';
+            else face.innerText = '😐';
+        }
+
+        function addTask() {
+            const input = document.getElementById('taskName');
+            const name = input.value.trim();
+            if(!name) return;
+            if(tasks.length >= 6) return alert("You have reached the maximum of 6 branches!");
+
+            tasks.push({ name: name, streak: 0, completedToday: false });
+            input.value = '';
+            updateUI();
+        }
+
+        function completeTask(index) {
+            if(!tasks[index].completedToday) {
+                tasks[index].completedToday = true;
+                tasks[index].streak++;
+                updateUI();
+            }
+        }
+
+        function simulateNextDay() {
+            currentDay++;
+            document.getElementById('dayDisplay').innerText = currentDay;
+            
+            // Wither logic
+            for(let i = tasks.length - 1; i >= 0; i--) {
+                let t = tasks[i];
+                if(!t.completedToday) {
+                    if(t.streak > 0) {
+                        // Drop visual tier
+                        if(t.streak >= 20) t.streak = 19;
+                        else if(t.streak >= 10) t.streak = 9;
+                        else t.streak = 0;
+                    }
+                    
+                    // If it drops to 0, branch breaks completely
+                    if(t.streak === 0) {
+                        alert(`Oh no! The branch for "${t.name}" has completely withered and fallen off.`);
+                        tasks.splice(i, 1);
+                        continue;
+                    }
+                }
+                // Reset daily status
+                t.completedToday = false;
+            }
+            updateUI();
+        }
+        updateUI();
+    </script>
+</body>
+</html>
