@@ -1,9 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const https = require('https');
+const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// Portul pentru HTTPS
+const PORT = process.env.PORT || 443;
 
 // Middleware
 app.use(cors());
@@ -21,11 +24,33 @@ app.get('/', (req, res) => {
 app.get('/api/status', (req, res) => {
     res.json({ 
         status: "success", 
-        message: "🌸 Backend-ul Sakura funcționează perfect!" 
+        message: "🌸 Backend-ul Sakura funcționează perfect prin HTTPS!" 
     });
 });
 
-// Pornim serverul
-app.listen(PORT, () => {
-    console.log(`🌸 Sakura Backend rulează pe portul ${PORT}`);
-});
+// Configurarea pentru Certbot SSL
+const domain = 'sakura.hreniuc.net';
+
+try {
+    // Citim certificatele SSL generate de Certbot
+    const privateKey = fs.readFileSync(`/etc/letsencrypt/live/${domain}/privkey.pem`, 'utf8');
+    const certificate = fs.readFileSync(`/etc/letsencrypt/live/${domain}/fullchain.pem`, 'utf8');
+    
+    const credentials = { key: privateKey, cert: certificate };
+
+    // Pornim serverul HTTPS
+    const httpsServer = https.createServer(credentials, app);
+    
+    httpsServer.listen(PORT, () => {
+        console.log(`🌸 Sakura Backend rulează securizat (HTTPS) pe portul ${PORT}`);
+    });
+} catch (error) {
+    // Fallback în cazul în care certificatele nu există încă sau nu avem permisiuni
+    console.error("⚠️ Nu am putut încărca certificatele SSL. Serverul va porni pe portul 80 (HTTP).");
+    console.error(error.message);
+    
+    const fallbackPort = 80;
+    app.listen(fallbackPort, () => {
+        console.log(`🌸 Sakura Backend rulează nesecurizat (HTTP) pe portul ${fallbackPort}`);
+    });
+}
