@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  sakura-web:
+    build: .
+    container_name: sakura_app
+    restart: unless-stopped
+    ports:
+      - "5000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
