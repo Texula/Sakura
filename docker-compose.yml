@@ -4,6 +4,7 @@ services:
   sakura-web:
     build: .
     container_name: sakura_app
+    user: "0:0"
     restart: unless-stopped
     ports:
       - "5000:3000"
