@@ -3,284 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sakura Prototype</title>
+    <title>Sakura App</title>
     <style>
         :root {
             --accent-color: #bb86fc;
-            --accent-rgb: 187, 134, 252;
             --glass-bg: rgba(30, 30, 30, 0.6);
             --glass-border: rgba(255, 255, 255, 0.1);
             --tree-trunk: #3e2723;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #000;
-            color: #e0e0e0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+            color: #e0e0e0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
         }
 
-        .container {
-            display: flex;
-            gap: 40px;
-            width: 90%;
-            max-width: 1000px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        /* Glassmorphism Panels */
         .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: var(--glass-bg); backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border); border-radius: 20px;
+            padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 100%; max-width: 400px; text-align: center;
         }
 
-        /* Dashboard / Controls */
-        .dashboard {
-            flex: 1;
-            min-width: 300px;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        /* Forms */
+        input {
+            width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px;
+            background: rgba(0,0,0,0.3); border: 1px solid #444; color: #fff; box-sizing: border-box;
         }
-
-        h2 { margin-top: 0; color: #fff; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; }
-        
-        .input-group { display: flex; gap: 10px; }
-        input[type="text"] {
-            flex: 1; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #444; 
-            color: #fff; border-radius: 8px; outline: none; transition: border 0.3s;
-        }
-        input[type="text"]:focus { border-color: var(--accent-color); }
+        input:focus { border-color: var(--accent-color); outline: none; }
         
         button {
-            background: var(--accent-color); color: #000; font-weight: bold; border: none;
-            padding: 10px 15px; border-radius: 8px; cursor: pointer; transition: transform 0.2s, background 0.2s;
+            width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold;
+            background: var(--accent-color); color: #000; cursor: pointer; transition: 0.2s;
         }
-        button:hover { transform: scale(1.05); background: #d0a8ff; }
-        button:disabled { background: #555; color: #888; cursor: not-allowed; transform: none; }
+        button:hover { transform: scale(1.02); filter: brightness(1.1); }
+        
+        .switch-link { color: var(--accent-color); cursor: pointer; font-size: 0.9em; margin-top: 15px; display: block; }
+        .switch-link:hover { text-decoration: underline; }
 
-        /* Task Items */
-        .task-list { display: flex; flex-direction: column; gap: 12px; }
-        .task-item {
-            background: rgba(255,255,255,0.05); border-left: 4px solid var(--accent-color);
-            padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .task-info { display: flex; flex-direction: column; gap: 4px; }
-        .task-name { font-weight: bold; color: #fff; }
-        .task-streak { font-size: 0.85em; color: #aaa; }
-        .btn-complete { background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color); }
-        .btn-complete:hover { background: rgba(187, 134, 252, 0.2); }
-        .btn-complete.done { background: #4caf50; border-color: #4caf50; color: #000; }
+        /* App Container (Tree) */
+        #app-screen { display: none; max-width: 900px; width: 90%; gap: 30px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+        .dashboard { flex: 1; min-width: 300px; text-align: left; }
+        .tree-area { flex: 1; min-width: 300px; height: 500px; display: flex; align-items: flex-end; justify-content: center; position: relative; }
+        
+        /* Logout Header */
+        .header-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-logout { background: #cf6679; width: auto; padding: 8px 15px; }
 
-        /* Tree Area */
-        .tree-area {
-            flex: 1;
-            min-width: 350px;
-            height: 500px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            position: relative;
-            padding-bottom: 20px;
-        }
-
-        .trunk {
-            width: 70px; height: 280px; background: var(--tree-trunk);
-            border-radius: 15px 15px 0 0; position: relative;
-            box-shadow: inset -10px 0 20px rgba(0,0,0,0.5);
-        }
-
-        .face {
-            position: absolute; top: 40%; left: 50%; transform: translateX(-50%);
-            font-size: 28px; text-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-
-        .branch {
-            position: absolute; background: var(--tree-trunk); height: 18px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: flex-end; padding-right: 5px;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: inset -5px 0 10px rgba(0,0,0,0.3);
-        }
-
-        /* 6 Default Branch Positions */
+        /* Tree CSS from Prototype */
+        .trunk { width: 70px; height: 280px; background: var(--tree-trunk); border-radius: 15px 15px 0 0; position: relative; }
+        .face { position: absolute; top: 40%; left: 50%; transform: translateX(-50%); font-size: 28px; }
+        .branch { position: absolute; background: var(--tree-trunk); height: 18px; border-radius: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 5px; transition: all 0.4s; }
         .branch-0 { width: 140px; top: 30px; left: -120px; transform: rotate(-25deg); }
         .branch-1 { width: 120px; top: 70px; right: -100px; transform: rotate(20deg); }
         .branch-2 { width: 150px; top: 120px; left: -130px; transform: rotate(-15deg); }
         .branch-3 { width: 130px; top: 150px; right: -110px; transform: rotate(15deg); }
         .branch-4 { width: 100px; top: 200px; left: -80px; transform: rotate(-5deg); }
         .branch-5 { width: 110px; top: 220px; right: -90px; transform: rotate(10deg); }
-
-        .element { font-size: 26px; transform: rotate(15deg); filter: drop-shadow(0 0 8px rgba(255,255,255,0.4)); }
-        
-        .post-it {
-            position: absolute; background: rgba(30,30,30,0.8); border: 1px solid var(--glass-border);
-            padding: 3px 6px; font-size: 11px; color: #fff; border-radius: 4px;
-            left: 10px; top: -25px; transform: rotate(-10deg); white-space: nowrap;
-        }
-
-        .dev-tools {
-            margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--glass-border);
-        }
+        .element { font-size: 26px; transform: rotate(15deg); }
+        .post-it { position: absolute; background: rgba(30,30,30,0.8); border: 1px solid var(--glass-border); padding: 3px 6px; font-size: 11px; color: #fff; border-radius: 4px; left: 10px; top: -25px; transform: rotate(-10deg); white-space: nowrap; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- Control Dashboard -->
-        <div class="glass-panel dashboard">
-            <h2>Your Routines (Max 6)</h2>
-            <div class="input-group">
-                <input type="text" id="taskName" placeholder="Ex: Gym, Reading, Coding" onkeypress="if(event.key === 'Enter') addTask()">
-                <button onclick="addTask()">Add</button>
-            </div>
-            
-            <div class="task-list" id="taskList">
-                <div style="text-align:center; color:#888; font-size:0.9em; margin-top:10px;">No routines added yet.</div>
-            </div>
+    <div id="login-screen" class="glass-panel">
+        <h2 style="color: var(--accent-color); margin-top: 0;">Sakura Login</h2>
+        <input type="text" id="logUser" placeholder="Username">
+        <input type="password" id="logPass" placeholder="Password">
+        <button onclick="doLogin()">Log In</button>
+        <span class="switch-link" onclick="showScreen('register-screen')">Don't have an account? Register</span>
+    </div>
 
-            <!-- Developer / Simulation Tools -->
-            <div class="dev-tools">
-                <div style="color: #bbb; font-size: 0.9em; margin-bottom: 10px;">
-                    Current Day: <strong id="dayDisplay" style="color: var(--accent-color);">1</strong>
-                </div>
-                <button onclick="simulateNextDay()" style="width: 100%; background: transparent; border: 1px dashed var(--accent-color); color: var(--accent-color);">
-                    ⏩ Simulate Next Day (00:00 Reset)
-                </button>
-            </div>
+    <div id="register-screen" class="glass-panel" style="display: none;">
+        <h2 style="color: var(--accent-color); margin-top: 0;">Create Garden</h2>
+        <input type="text" id="regUser" placeholder="Username">
+        <input type="password" id="regPass" placeholder="Password">
+        <input type="color" id="regColor" value="#bb86fc" style="padding: 2px; height: 40px; cursor: pointer;">
+        <button onclick="doRegister()">Sign Up</button>
+        <span class="switch-link" onclick="showScreen('login-screen')">Back to Login</span>
+    </div>
+
+    <div id="app-screen">
+        <div class="header-bar">
+            <h2>Welcome, <span id="welcome-name" style="color: var(--accent-color);"></span>!</h2>
+            <button class="btn-logout" onclick="doLogout()">Logout</button>
         </div>
 
-        <!-- Visual Tree -->
+        <div class="glass-panel dashboard">
+            <h3>Your Routines (Max 6)</h3>
+            <div style="display:flex; gap:10px; margin-bottom: 20px;">
+                <input type="text" id="taskName" placeholder="Ex: Gym, Reading" style="margin:0;">
+                <button onclick="addTask()" style="width: auto;">Add</button>
+            </div>
+            <div id="taskList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            <button onclick="simulateNextDay()" style="margin-top: 30px; background: transparent; border: 1px dashed var(--accent-color); color: var(--accent-color);">⏩ Simulate Next Day (00:00 Reset)</button>
+        </div>
+
         <div class="glass-panel tree-area">
             <div class="trunk" id="treeTrunk">
                 <div class="face" id="treeFace">😴</div>
-                <!-- Branches dynamically injected here -->
             </div>
         </div>
     </div>
 
     <script>
-        let tasks = [];
-        let currentDay = 1;
+        // --- 1. AUTHENTICATION LOGIC ---
+        async function checkSession() {
+            const token = localStorage.getItem('sakura_token');
+            if(!token) return showScreen('login-screen');
 
-        function updateUI() {
-            const taskList = document.getElementById('taskList');
-            const trunk = document.getElementById('treeTrunk');
-            const face = document.getElementById('treeFace');
+            const res = await fetch('/api/verify', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token})});
+            const data = await res.json();
             
-            // Clear current UI elements
-            taskList.innerHTML = '';
-            Array.from(trunk.children).forEach(child => {
-                if(child.id !== 'treeFace') trunk.removeChild(child);
-            });
-
-            if(tasks.length === 0) {
-                taskList.innerHTML = '<div style="text-align:center; color:#888; font-size:0.9em; margin-top:10px;">No routines added yet.</div>';
-                face.innerText = '😴';
-                return;
+            if(data.valid) {
+                document.getElementById('welcome-name').innerText = data.username;
+                showScreen('app-screen');
+                updateUI(); // Render empty tree initially
+            } else {
+                localStorage.removeItem('sakura_token');
+                showScreen('login-screen');
             }
+        }
+
+        async function doLogin() {
+            const u = document.getElementById('logUser').value, p = document.getElementById('logPass').value;
+            const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username: u, password: p})});
+            const data = await res.json();
+            if(data.success) { localStorage.setItem('sakura_token', data.token); checkSession(); } 
+            else alert(data.error);
+        }
+
+        async function doRegister() {
+            const u = document.getElementById('regUser').value, p = document.getElementById('regPass').value, c = document.getElementById('regColor').value;
+            const res = await fetch('/api/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username: u, password: p, color: c})});
+            const data = await res.json();
+            if(data.success) { alert(data.message); showScreen('login-screen'); } 
+            else alert(data.error);
+        }
+
+        function doLogout() { localStorage.removeItem('sakura_token'); window.location.reload(); }
+        function showScreen(id) { ['login-screen', 'register-screen', 'app-screen'].forEach(s => document.getElementById(s).style.display = 'none'); document.getElementById(id).style.display = (id==='app-screen')?'flex':'block'; }
+
+        // --- 2. TREE LOGIC (FROM PROTOTYPE) ---
+        let tasks = [];
+        
+        function updateUI() {
+            const taskList = document.getElementById('taskList'), trunk = document.getElementById('treeTrunk'), face = document.getElementById('treeFace');
+            taskList.innerHTML = '';
+            Array.from(trunk.children).forEach(child => { if(child.id !== 'treeFace') trunk.removeChild(child); });
+
+            if(tasks.length === 0) { taskList.innerHTML = '<div style="color:#888;">No routines yet.</div>'; face.innerText = '😴'; return; }
 
             let allCompletedToday = true;
-
             tasks.forEach((task, index) => {
                 if(!task.completedToday) allCompletedToday = false;
 
-                // 1. Render Task Buttons
-                const taskEl = document.createElement('div');
-                taskEl.className = 'task-item';
-                taskEl.innerHTML = `
-                    <div class="task-info">
-                        <span class="task-name">${task.name}</span>
-                        <span class="task-streak">Streak: ${task.streak} ${task.streak === 1 ? 'day' : 'days'}</span>
-                    </div>
-                    <button class="btn-complete ${task.completedToday ? 'done' : ''}" onclick="completeTask(${index})" ${task.completedToday ? 'disabled' : ''}>
-                        ${task.completedToday ? 'Done ✓' : 'Water 💧'}
-                    </button>
-                `;
-                taskList.appendChild(taskEl);
+                // Buttons
+                taskList.innerHTML += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-left:3px solid var(--accent-color); border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+                    <div><b>${task.name}</b><br><small style="color:#aaa;">Streak: ${task.streak} days</small></div>
+                    <button onclick="completeTask(${index})" style="width:auto; padding:5px 10px; background:${task.completedToday ? '#4caf50' : 'transparent'}; border:1px solid ${task.completedToday ? '#4caf50' : 'var(--accent-color)'}; color:${task.completedToday ? '#000' : 'var(--accent-color)'}" ${task.completedToday ? 'disabled' : ''}>${task.completedToday ? 'Done ✓' : 'Water 💧'}</button>
+                </div>`;
 
-                // 2. Render Branches
-                const branch = document.createElement('div');
-                branch.className = `branch branch-${index}`;
-                
-                let visual = '';
-                if(task.streak >= 20) visual = '🍒';
-                else if(task.streak >= 10) visual = '🌸';
-                else if(task.streak > 0) visual = '🌱';
-                else visual = '🍂'; // Just died/withered
-
-                branch.innerHTML = `
-                    <div class="post-it">${task.name}</div>
-                    <div class="element">${visual}</div>
-                `;
-                trunk.appendChild(branch);
+                // Branches
+                let visual = task.streak >= 20 ? '🍒' : task.streak >= 10 ? '🌸' : task.streak > 0 ? '🌱' : '🍂';
+                trunk.innerHTML += `<div class="branch branch-${index}"><div class="post-it">${task.name}</div><div class="element">${visual}</div></div>`;
             });
 
-            // Update Face Logic
             if (allCompletedToday) face.innerText = '😊';
             else if (tasks.some(t => t.streak === 0 && !t.completedToday)) face.innerText = '😢';
             else face.innerText = '😐';
         }
 
         function addTask() {
-            const input = document.getElementById('taskName');
-            const name = input.value.trim();
-            if(!name) return;
-            if(tasks.length >= 6) return alert("You have reached the maximum of 6 branches!");
-
-            tasks.push({ name: name, streak: 0, completedToday: false });
-            input.value = '';
-            updateUI();
+            const input = document.getElementById('taskName'), name = input.value.trim();
+            if(!name || tasks.length >= 6) return;
+            tasks.push({ name: name, streak: 0, completedToday: false }); input.value = ''; updateUI();
         }
 
-        function completeTask(index) {
-            if(!tasks[index].completedToday) {
-                tasks[index].completedToday = true;
-                tasks[index].streak++;
-                updateUI();
-            }
-        }
+        function completeTask(index) { if(!tasks[index].completedToday) { tasks[index].completedToday = true; tasks[index].streak++; updateUI(); } }
 
         function simulateNextDay() {
-            currentDay++;
-            document.getElementById('dayDisplay').innerText = currentDay;
-            
-            // Wither logic
             for(let i = tasks.length - 1; i >= 0; i--) {
                 let t = tasks[i];
                 if(!t.completedToday) {
-                    if(t.streak > 0) {
-                        // Drop visual tier
-                        if(t.streak >= 20) t.streak = 19;
-                        else if(t.streak >= 10) t.streak = 9;
-                        else t.streak = 0;
-                    }
-                    
-                    // If it drops to 0, branch breaks completely
-                    if(t.streak === 0) {
-                        alert(`Oh no! The branch for "${t.name}" has completely withered and fallen off.`);
-                        tasks.splice(i, 1);
-                        continue;
-                    }
+                    if(t.streak >= 20) t.streak = 19; else if(t.streak >= 10) t.streak = 9; else t.streak = 0;
+                    if(t.streak === 0) { alert(`Branch "${t.name}" withered and fell off!`); tasks.splice(i, 1); continue; }
                 }
-                // Reset daily status
                 t.completedToday = false;
             }
             updateUI();
         }
-        updateUI();
+
+        // Init
+        checkSession();
     </script>
 </body>
 </html>

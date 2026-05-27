@@ -1,4 +1,5 @@
 version: '3.8'
+
 services:
   sakura-web:
     build: .
@@ -9,3 +10,6 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+    volumes:
+      # AICI SALVĂM BAZA DE DATE - Așa nu se pierde la reconstrucția containerului!
+      - ./data:/usr/src/app/data
