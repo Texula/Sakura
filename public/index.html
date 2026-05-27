@@ -25,7 +25,6 @@
             width: 100%; max-width: 400px; text-align: center;
         }
 
-        /* Forms */
         input {
             width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px;
             background: rgba(0,0,0,0.3); border: 1px solid #444; color: #fff; box-sizing: border-box;
@@ -37,6 +36,7 @@
             background: var(--accent-color); color: #000; cursor: pointer; transition: 0.2s;
         }
         button:hover { transform: scale(1.02); filter: brightness(1.1); }
+        button:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
         
         .switch-link { color: var(--accent-color); cursor: pointer; font-size: 0.9em; margin-top: 15px; display: block; }
         .switch-link:hover { text-decoration: underline; }
@@ -46,11 +46,9 @@
         .dashboard { flex: 1; min-width: 300px; text-align: left; }
         .tree-area { flex: 1; min-width: 300px; height: 500px; display: flex; align-items: flex-end; justify-content: center; position: relative; }
         
-        /* Logout Header */
         .header-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .btn-logout { background: #cf6679; width: auto; padding: 8px 15px; }
 
-        /* Tree CSS from Prototype */
         .trunk { width: 70px; height: 280px; background: var(--tree-trunk); border-radius: 15px 15px 0 0; position: relative; }
         .face { position: absolute; top: 40%; left: 50%; transform: translateX(-50%); font-size: 28px; }
         .branch { position: absolute; background: var(--tree-trunk); height: 18px; border-radius: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 5px; transition: all 0.4s; }
@@ -66,23 +64,27 @@
 </head>
 <body>
 
+    <!-- LOGIN SCREEN -->
     <div id="login-screen" class="glass-panel">
         <h2 style="color: var(--accent-color); margin-top: 0;">Sakura Login</h2>
-        <input type="text" id="logUser" placeholder="Username">
-        <input type="password" id="logPass" placeholder="Password">
-        <button onclick="doLogin()">Log In</button>
+        <input type="text" id="logUser" placeholder="Username" onkeypress="if(event.key === 'Enter') doLogin()">
+        <input type="password" id="logPass" placeholder="Password" onkeypress="if(event.key === 'Enter') doLogin()">
+        <button id="btnLogin" onclick="doLogin()">Log In</button>
         <span class="switch-link" onclick="showScreen('register-screen')">Don't have an account? Register</span>
     </div>
 
+    <!-- REGISTER SCREEN -->
     <div id="register-screen" class="glass-panel" style="display: none;">
         <h2 style="color: var(--accent-color); margin-top: 0;">Create Garden</h2>
-        <input type="text" id="regUser" placeholder="Username">
-        <input type="password" id="regPass" placeholder="Password">
+        <input type="text" id="regUser" placeholder="Username" onkeypress="if(event.key === 'Enter') doRegister()">
+        <input type="password" id="regPass" placeholder="Password" onkeypress="if(event.key === 'Enter') doRegister()">
+        <div style="text-align: left; margin-bottom: 5px; color: #aaa; font-size: 0.9em;">Culoare profil:</div>
         <input type="color" id="regColor" value="#bb86fc" style="padding: 2px; height: 40px; cursor: pointer;">
-        <button onclick="doRegister()">Sign Up</button>
+        <button id="btnRegister" onclick="doRegister()">Sign Up</button>
         <span class="switch-link" onclick="showScreen('login-screen')">Back to Login</span>
     </div>
 
+    <!-- APP SCREEN -->
     <div id="app-screen">
         <div class="header-bar">
             <h2>Welcome, <span id="welcome-name" style="color: var(--accent-color);"></span>!</h2>
@@ -92,7 +94,7 @@
         <div class="glass-panel dashboard">
             <h3>Your Routines (Max 6)</h3>
             <div style="display:flex; gap:10px; margin-bottom: 20px;">
-                <input type="text" id="taskName" placeholder="Ex: Gym, Reading" style="margin:0;">
+                <input type="text" id="taskName" placeholder="Ex: Gym, Reading" style="margin:0;" onkeypress="if(event.key === 'Enter') addTask()">
                 <button onclick="addTask()" style="width: auto;">Add</button>
             </div>
             <div id="taskList" style="display: flex; flex-direction: column; gap: 10px;"></div>
@@ -112,39 +114,101 @@
             const token = localStorage.getItem('sakura_token');
             if(!token) return showScreen('login-screen');
 
-            const res = await fetch('/api/verify', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token})});
-            const data = await res.json();
-            
-            if(data.valid) {
-                document.getElementById('welcome-name').innerText = data.username;
-                showScreen('app-screen');
-                updateUI(); // Render empty tree initially
-            } else {
-                localStorage.removeItem('sakura_token');
+            try {
+                const res = await fetch('/api/verify', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token})});
+                const data = await res.json();
+                
+                if(data.valid) {
+                    document.getElementById('welcome-name').innerText = data.username;
+                    showScreen('app-screen');
+                    updateUI(); 
+                } else {
+                    localStorage.removeItem('sakura_token');
+                    showScreen('login-screen');
+                }
+            } catch (error) {
+                console.error("Eroare la verificarea sesiunii:", error);
                 showScreen('login-screen');
             }
         }
 
         async function doLogin() {
-            const u = document.getElementById('logUser').value, p = document.getElementById('logPass').value;
-            const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username: u, password: p})});
-            const data = await res.json();
-            if(data.success) { localStorage.setItem('sakura_token', data.token); checkSession(); } 
-            else alert(data.error);
+            const u = document.getElementById('logUser').value.trim();
+            const p = document.getElementById('logPass').value;
+            const btn = document.getElementById('btnLogin');
+
+            if(!u || !p) return alert("Introdu username și parola!");
+
+            btn.disabled = true;
+            btn.innerText = "Se încarcă...";
+
+            try {
+                const res = await fetch('/api/login', { 
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({username: u, password: p})
+                });
+                
+                // Dacă serverul dă eroare internă severă (500), JSON-ul va pica, așa că îl prindem aici
+                const data = await res.json();
+                
+                if(data.success) { 
+                    localStorage.setItem('sakura_token', data.token); 
+                    checkSession(); 
+                } else {
+                    alert(data.error || "Eroare la logare.");
+                }
+            } catch (error) {
+                alert("Eroare de rețea. Serverul este oprit sau nu poate fi accesat.");
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Log In";
+            }
         }
 
         async function doRegister() {
-            const u = document.getElementById('regUser').value, p = document.getElementById('regPass').value, c = document.getElementById('regColor').value;
-            const res = await fetch('/api/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username: u, password: p, color: c})});
-            const data = await res.json();
-            if(data.success) { alert(data.message); showScreen('login-screen'); } 
-            else alert(data.error);
+            const u = document.getElementById('regUser').value.trim();
+            const p = document.getElementById('regPass').value;
+            const c = document.getElementById('regColor').value;
+            const btn = document.getElementById('btnRegister');
+
+            if(!u || !p) return alert("Completează username și parola!");
+
+            btn.disabled = true;
+            btn.innerText = "Se încarcă...";
+
+            try {
+                const res = await fetch('/api/register', { 
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({username: u, password: p, color: c})
+                });
+                
+                const data = await res.json();
+                
+                if(data.success) { 
+                    alert(data.message); 
+                    showScreen('login-screen'); 
+                } else {
+                    alert(data.error || "Eroare la înregistrare.");
+                }
+            } catch (error) {
+                alert("Eroare de rețea. Serverul este oprit sau nu poate fi accesat.");
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Sign Up";
+            }
         }
 
         function doLogout() { localStorage.removeItem('sakura_token'); window.location.reload(); }
-        function showScreen(id) { ['login-screen', 'register-screen', 'app-screen'].forEach(s => document.getElementById(s).style.display = 'none'); document.getElementById(id).style.display = (id==='app-screen')?'flex':'block'; }
+        function showScreen(id) { 
+            ['login-screen', 'register-screen', 'app-screen'].forEach(s => document.getElementById(s).style.display = 'none'); 
+            document.getElementById(id).style.display = (id==='app-screen')?'flex':'block'; 
+        }
 
-        // --- 2. TREE LOGIC (FROM PROTOTYPE) ---
+        // --- 2. TREE LOGIC ---
         let tasks = [];
         
         function updateUI() {
@@ -158,13 +222,11 @@
             tasks.forEach((task, index) => {
                 if(!task.completedToday) allCompletedToday = false;
 
-                // Buttons
                 taskList.innerHTML += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-left:3px solid var(--accent-color); border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
                     <div><b>${task.name}</b><br><small style="color:#aaa;">Streak: ${task.streak} days</small></div>
                     <button onclick="completeTask(${index})" style="width:auto; padding:5px 10px; background:${task.completedToday ? '#4caf50' : 'transparent'}; border:1px solid ${task.completedToday ? '#4caf50' : 'var(--accent-color)'}; color:${task.completedToday ? '#000' : 'var(--accent-color)'}" ${task.completedToday ? 'disabled' : ''}>${task.completedToday ? 'Done ✓' : 'Water 💧'}</button>
                 </div>`;
 
-                // Branches
                 let visual = task.streak >= 20 ? '🍒' : task.streak >= 10 ? '🌸' : task.streak > 0 ? '🌱' : '🍂';
                 trunk.innerHTML += `<div class="branch branch-${index}"><div class="post-it">${task.name}</div><div class="element">${visual}</div></div>`;
             });
