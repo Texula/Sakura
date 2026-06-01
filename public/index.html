@@ -6,21 +6,23 @@
     <title>Sakura App</title>
     <style>
         /* ==============================================================
-           VARIABLES & BASE RESET
+           1. CSS VARIABLES & BASE THEME
         ============================================================== */
-        :root {d
+        :root {
             --accent-color: #ffb7c5; 
             --accent-hover: #ff8da1;
-            --glass-bg: rgba(20, 15, 20, 0.65);
-            --glass-border: rgba(255, 183, 197, 0.2);
-            --tree-wood: #2d1616;
-            --tree-highlight: #4a2525;
+            --glass-bg: rgba(15, 10, 18, 0.7);
+            --glass-border: rgba(255, 183, 197, 0.15);
+            --tree-wood: #261216;
+            --tree-highlight: #4a2128;
+            --bg-top: #160a12;
+            --bg-bottom: #050204;
         }
 
         body {
             margin: 0; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: radial-gradient(circle at bottom center, #2b1320 0%, #0a0508 100%);
+            background: linear-gradient(to bottom, var(--bg-top), var(--bg-bottom));
             color: #e0e0e0; 
             min-height: 100vh; 
             display: flex; 
@@ -29,17 +31,31 @@
             overflow-x: hidden;
         }
 
+        /* Ambient glowing moon in the background */
+        .moon {
+            position: absolute;
+            top: 10%;
+            right: 15%;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: #fff9e6;
+            box-shadow: 0 0 60px 20px rgba(255, 249, 230, 0.3), inset -20px -20px 40px rgba(0,0,0,0.1);
+            z-index: 0;
+            opacity: 0.8;
+        }
+
         /* ==============================================================
-           UI ELEMENTS (GLASS PANELS)
+           2. UI COMPONENTS (GLASS PANELS)
         ============================================================== */
         .glass-panel {
             background: var(--glass-bg); 
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border); 
             border-radius: 20px;
             padding: 30px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
             width: 100%; 
             max-width: 400px; 
             text-align: center;
@@ -49,126 +65,180 @@
 
         input {
             width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px;
-            background: rgba(0,0,0,0.5); border: 1px solid #444; color: #fff; box-sizing: border-box;
+            background: rgba(0,0,0,0.6); border: 1px solid #333; color: #fff; box-sizing: border-box;
             transition: all 0.3s;
         }
-        input:focus { border-color: var(--accent-color); outline: none; box-shadow: 0 0 8px rgba(255, 183, 197, 0.3); }
+        input:focus { border-color: var(--accent-color); outline: none; box-shadow: 0 0 10px rgba(255, 183, 197, 0.2); }
 
         button {
             width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold;
-            background: var(--accent-color); color: #2d1616; cursor: pointer; transition: 0.3s;
+            background: var(--accent-color); color: #261216; cursor: pointer; transition: 0.3s;
             text-transform: uppercase; letter-spacing: 1px;
         }
-        button:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 183, 197, 0.4); }
+        button:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 5px 20px rgba(255, 183, 197, 0.3); }
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
         .switch-link { color: var(--accent-color); cursor: pointer; font-size: 0.9em; margin-top: 15px; display: block; }
         .switch-link:hover { text-decoration: underline; color: var(--accent-hover); }
 
         /* ==============================================================
-           APP STRUCTURE (DASHBOARD & TREE)
+           3. APP LAYOUT (DASHBOARD)
         ============================================================== */
         #app-screen { 
-            display: none; max-width: 1000px; width: 95%; gap: 40px; 
+            display: none; max-width: 1200px; width: 95%; gap: 40px; 
             flex-wrap: wrap; justify-content: center; align-items: stretch; 
+            padding: 40px 0;
+            z-index: 10;
         }
-        .dashboard { flex: 1; min-width: 320px; text-align: left; }
+        
+        .dashboard { 
+            flex: 1; min-width: 350px; text-align: left; 
+            display: flex; flex-direction: column;
+            max-height: 80vh; /* Prevents panel from getting taller than screen */
+        }
+        
+        /* Scrollable task list area */
+        .task-list-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-bottom: 20px;
+        }
+        
+        /* Custom Scrollbar for dashboard */
+        .task-list-container::-webkit-scrollbar { width: 6px; }
+        .task-list-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        .task-list-container::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 4px; }
+
         .header-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .btn-logout { background: #cf6679; width: auto; padding: 8px 15px; color: white;}
 
         /* ==============================================================
-           🌸 SAKURA TREE ART 🌸
+           4. PROCEDURAL SAKURA TREE ART CSS
         ============================================================== */
         .tree-area { 
-            flex: 1.5; min-width: 350px; height: 550px; 
+            flex: 1.5; min-width: 400px; height: 80vh; 
             display: flex; align-items: flex-end; justify-content: center; 
             position: relative;
-            background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 20%);
+            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 30%);
             border-radius: 20px;
-            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            overflow-y: auto; /* Allows scrolling if tree gets too tall */
+            overflow-x: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        
+        .tree-area::-webkit-scrollbar { width: 0px; } /* Hide scrollbar for tree for cleaner look */
+
+        .tree-container {
+            position: relative;
+            width: 500px; /* Fixed internal width for SVG coordinates */
+            min-height: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
         }
 
-        .trunk { 
-            width: 60px; height: 250px; 
-            background: linear-gradient(90deg, var(--tree-wood) 0%, var(--tree-highlight) 50%, var(--tree-wood) 100%); 
-            border-radius: 10px 10px 0 0; 
-            position: relative; 
-            z-index: 5;
-            box-shadow: 5px 0 15px rgba(0,0,0,0.5) inset;
-        }
-
-        .face { 
-            position: absolute; top: 30%; left: 50%; transform: translateX(-50%); 
-            font-size: 26px; text-shadow: 0 0 5px rgba(0,0,0,0.8);
-        }
-
-        .branch { 
-            position: absolute; 
-            background: linear-gradient(0deg, var(--tree-wood) 0%, var(--tree-highlight) 100%); 
-            height: 12px; border-radius: 6px; 
-            display: flex; align-items: center; justify-content: flex-end; 
-            transition: all 0.8s ease; 
-            box-shadow: 0 5px 10px rgba(0,0,0,0.4);
-        }
-
-        .blossom-node {
+        #tree-svg {
             position: absolute;
-            width: 20px; height: 20px;
-            border-radius: 50%;
-            transition: all 1s ease-in-out;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            /* Height is set dynamically by JS */
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));
         }
 
-        .level-0 { background: transparent; }
-        .level-1 { background: radial-gradient(circle, #ffb7c5 40%, transparent 60%); box-shadow: 0 0 10px rgba(255,183,197,0.5); transform: scale(2); }
-        .level-2 { background: radial-gradient(circle, #ff8da1 30%, #ffb7c5 60%, transparent 70%); box-shadow: 0 0 20px rgba(255,141,161,0.8), 0 0 40px rgba(255,183,197,0.4); transform: scale(3.5); }
-        .level-3 { background: radial-gradient(circle, #ff5e7e 30%, #ff8da1 50%, transparent 70%); box-shadow: 0 0 30px #ff5e7e, 0 0 60px #ff8da1, 0 0 80px rgba(255,183,197,0.5); transform: scale(5); }
+        #tree-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            pointer-events: none; /* Let clicks pass through to tree-area */
+        }
 
-        .post-it { 
-            position: absolute; 
-            background: rgba(20, 15, 20, 0.85); 
-            border: 1px solid var(--accent-color); 
-            padding: 4px 8px; font-size: 11px; font-weight: bold; color: #fff; 
-            border-radius: 6px; white-space: nowrap; 
+        /* Generated Branches and Nodes */
+        .branch-node {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .blossom {
+            font-size: 28px;
+            line-height: 1;
+            transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy bloom effect */
+            z-index: 2;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+        }
+
+        .task-label {
+            position: absolute;
+            background: rgba(10, 5, 8, 0.85);
+            padding: 6px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            white-space: nowrap;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+            z-index: 3;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            letter-spacing: 0.5px;
+        }
+        .label-left { right: 25px; transform-origin: right center; }
+        .label-right { left: 25px; transform-origin: left center; }
+
+        /* Petal Animation System */
+        #petalContainer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            overflow: hidden;
             z-index: 10;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
 
         .petal { 
             position: absolute; 
             background: linear-gradient(135deg, #ffb7c5, #ff8da1); 
             border-radius: 15px 0 15px 0; 
-            width: 12px; height: 16px; 
-            opacity: 0.8; 
-            z-index: 1; 
-            pointer-events: none; 
+            width: 10px; height: 14px; 
+            opacity: 0; 
             animation: fall linear infinite, sway ease-in-out infinite alternate; 
-            box-shadow: 0 0 5px rgba(255,183,197,0.5);
+            box-shadow: 0 0 8px rgba(255,183,197,0.4);
         }
 
         @keyframes fall { 
             0% { top: -10%; opacity: 0; } 
             10% { opacity: 0.8; }
             90% { opacity: 0.8; }
-            100% { top: 110%; opacity: 0; } 
+            100% { top: 100%; opacity: 0; } 
         }
         @keyframes sway { 
-            0% { transform: translateX(0) rotate(0deg); } 
-            100% { transform: translateX(80px) rotate(60deg); } 
+            0% { transform: translateX(-20px) rotate(-20deg); } 
+            100% { transform: translateX(40px) rotate(45deg); } 
         }
     </style>
 </head>
 <body>
 
-    <!-- LOGIN SCREEN -->
+    <div class="moon"></div>
+
+    <!-- ==============================================================
+         LOGIN SCREEN
+    ============================================================== -->
     <div id="login-screen" class="glass-panel">
-        <h2 style="color: var(--accent-color); margin-top: 0; font-size: 2em;">🌸 Sakura</h2>
+        <h2 style="color: var(--accent-color); margin-top: 0; font-size: 2.5em; text-shadow: 0 0 15px rgba(255,183,197,0.3);">🌸 Sakura</h2>
         <input type="text" id="logUser" placeholder="Username" onkeypress="if(event.key === 'Enter') doLogin()">
         <input type="password" id="logPass" placeholder="Password" onkeypress="if(event.key === 'Enter') doLogin()">
         <button id="btnLogin" onclick="doLogin()">Log In</button>
         <span class="switch-link" onclick="showScreen('register-screen')">Don't have an account? Create your Garden</span>
     </div>
 
-    <!-- REGISTER SCREEN -->
+    <!-- ==============================================================
+         REGISTER SCREEN
+    ============================================================== -->
     <div id="register-screen" class="glass-panel" style="display: none;">
         <h2 style="color: var(--accent-color); margin-top: 0;">Create Garden</h2>
         <input type="text" id="regUser" placeholder="Username" onkeypress="if(event.key === 'Enter') doRegister()">
@@ -179,42 +249,57 @@
         <span class="switch-link" onclick="showScreen('login-screen')">Back to Log In</span>
     </div>
 
-    <!-- APP SCREEN -->
+    <!-- ==============================================================
+         MAIN APP SCREEN
+    ============================================================== -->
     <div id="app-screen">
-        <div class="header-bar">
-            <h2>Welcome, <span id="welcome-name" style="color: var(--accent-color);"></span>!</h2>
-            <button class="btn-logout" onclick="doLogout()">Logout</button>
-        </div>
-
+        
+        <!-- DASHBOARD (LEFT) -->
         <div class="glass-panel dashboard">
-            <h3 style="margin-top: 0;">Daily Routines (Max 6)</h3>
+            <div class="header-bar">
+                <h2>Welcome, <span id="welcome-name" style="color: var(--accent-color);"></span>!</h2>
+                <button class="btn-logout" onclick="doLogout()">Logout</button>
+            </div>
+
+            <h3 style="margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Daily Routines</h3>
+            
             <div style="display:flex; gap:10px; margin-bottom: 20px;">
                 <input type="text" id="taskName" placeholder="Ex: Gym, Reading, Water" style="margin:0;" onkeypress="if(event.key === 'Enter') addTask()">
-                <button onclick="addTask()" style="width: auto; padding: 0 20px;">Add</button>
+                <button onclick="addTask()" style="width: auto; padding: 0 25px;">Plant</button>
             </div>
             
-            <div id="taskList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+            <!-- SCROLLABLE LIST -->
+            <div class="task-list-container">
+                <div id="taskList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+            </div>
             
             <!-- Hidden button, only for admin/matei/test -->
-            <button id="btn-simulate" onclick="simulateNextDay()" style="display: none; margin-top: 30px; background: transparent; border: 1px dashed var(--accent-color); color: var(--accent-color);">
+            <button id="btn-simulate" onclick="simulateNextDay()" style="display: none; margin-top: 15px; background: transparent; border: 1px dashed var(--accent-color); color: var(--accent-color);">
                 ⏩ Simulate Next Day (Test)
             </button>
         </div>
 
-        <!-- SAKURA TREE ART CONTAINER -->
-        <div class="glass-panel tree-area">
-            <div class="trunk" id="treeTrunk">
-                <div class="face" id="treeFace">😴</div>
+        <!-- PROCEDURAL SAKURA TREE (RIGHT) -->
+        <div class="tree-area">
+            <div class="tree-container">
+                <!-- SVG draws the physical branches -->
+                <svg id="tree-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+                <!-- Overlay handles the HTML Blossoms and Labels -->
+                <div id="tree-overlay"></div>
+                <!-- Petal particle system -->
+                <div id="petalContainer"></div>
             </div>
-            <div id="petalContainer"></div>
         </div>
     </div>
 
+    <!-- ==============================================================
+         JAVASCRIPT LOGIC
+    ============================================================== -->
     <script>
         // --- 1. AUTHENTICATION & PERMISSIONS ---
         const ALLOWED_ADMINS = ['admin', 'matei', 'test'];
         let currentUser = "";
-        let tasks = []; // State array is populated from the DB now
+        let tasks = []; // State array
 
         function evaluatePermissions(username) {
             currentUser = username;
@@ -250,7 +335,7 @@
                 
                 if(data.valid) {
                     document.getElementById('welcome-name').innerText = data.username;
-                    tasks = data.tasks || []; // Load saved tasks!
+                    tasks = data.tasks || []; // Load saved tasks
                     evaluatePermissions(data.username);
                     showScreen('app-screen');
                     updateUI(); 
@@ -285,7 +370,7 @@
                 
                 if(data.success) { 
                     localStorage.setItem('sakura_token', data.token); 
-                    tasks = data.tasks || []; // Load saved tasks!
+                    tasks = data.tasks || []; 
                     checkSession(); 
                 } else {
                     alert(data.error || "Login error.");
@@ -338,90 +423,165 @@
             document.getElementById(id).style.display = (id==='app-screen')?'flex':'block'; 
         }
 
-        // --- 2. SAKURA TREE LOGIC & UI ---
+        // --- 2. SAKURA TREE LOGIC (UI & PROCEDURAL ENGINE) ---
 
-        const branchConfig = [
-            { width: '120px', top: '30px', side: 'left', transform: 'rotate(-35deg)', origin: 'right center' },
-            { width: '110px', top: '60px', side: 'right', transform: 'rotate(25deg)', origin: 'left center' },
-            { width: '140px', top: '100px', side: 'left', transform: 'rotate(-20deg)', origin: 'right center' },
-            { width: '130px', top: '130px', side: 'right', transform: 'rotate(15deg)', origin: 'left center' },
-            { width: '90px', top: '170px', side: 'left', transform: 'rotate(-10deg)', origin: 'right center' },
-            { width: '100px', top: '190px', side: 'right', transform: 'rotate(10deg)', origin: 'left center' }
-        ];
-        
         function updateUI() {
+            renderDashboard();
+            renderProceduralTree();
+        }
+
+        function renderDashboard() {
             const taskList = document.getElementById('taskList');
-            const trunk = document.getElementById('treeTrunk');
-            const face = document.getElementById('treeFace');
-            
             taskList.innerHTML = '';
-            Array.from(trunk.children).forEach(child => { if(child.id !== 'treeFace') trunk.removeChild(child); });
 
             if(tasks.length === 0) { 
-                taskList.innerHTML = '<div style="color:#888; text-align:center;">No routines created yet. Start growing your garden!</div>'; 
-                face.innerText = '😴'; 
-                generatePetals(0); 
+                taskList.innerHTML = '<div style="color:#888; text-align:center; padding: 20px;">No routines created yet.<br>Start growing your garden!</div>'; 
                 return; 
             }
 
-            let allCompletedToday = true;
-            let totalStreak = 0;
-
             tasks.forEach((task, index) => {
-                if(!task.completedToday) allCompletedToday = false;
-                totalStreak += task.streak;
+                const statusColor = task.completedToday ? '#4caf50' : 'var(--accent-color)';
+                const btnStyle = task.completedToday 
+                    ? `background: rgba(76, 175, 80, 0.2); border: 2px solid #4caf50; color: #4caf50;` 
+                    : `background: transparent; border: 2px solid var(--accent-color); color: var(--accent-color);`;
 
                 taskList.innerHTML += `
-                <div style="background:rgba(0,0,0,0.3); padding:12px; border-left:4px solid ${task.completedToday ? '#4caf50' : 'var(--accent-color)'}; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="background:rgba(0,0,0,0.4); padding:15px; border-left:4px solid ${statusColor}; border-radius:10px; display:flex; justify-content:space-between; align-items:center; transition: 0.3s;">
                     <div>
-                        <b style="font-size:1.1em;">${task.name}</b><br>
-                        <small style="color:#aaa;">🔥 Streak: ${task.streak} days</small>
+                        <b style="font-size:1.1em; letter-spacing: 0.5px;">${task.name}</b><br>
+                        <small style="color:#aaa;">🔥 Streak: <b>${task.streak}</b> days</small>
                     </div>
-                    <button onclick="completeTask(${index})" style="width:auto; padding:8px 15px; background:${task.completedToday ? '#4caf50' : 'transparent'}; border:2px solid ${task.completedToday ? '#4caf50' : 'var(--accent-color)'}; color:${task.completedToday ? '#fff' : 'var(--accent-color)'}" ${task.completedToday ? 'disabled' : ''}>
+                    <button onclick="completeTask(${index})" style="width:auto; padding:8px 16px; border-radius: 6px; ${btnStyle}" ${task.completedToday ? 'disabled' : ''}>
                         ${task.completedToday ? 'Watered ✓' : 'Water 💧'}
                     </button>
                 </div>`;
-
-                let levelClass = task.streak >= 20 ? 'level-3' : task.streak >= 10 ? 'level-2' : task.streak > 0 ? 'level-1' : 'level-0';
-                let conf = branchConfig[index];
-                let isLeft = conf.side === 'left';
-                let antiRotate = isLeft ? `rotate(35deg)` : `rotate(-25deg)`;
-
-                trunk.innerHTML += `
-                <div class="branch" style="width: ${conf.width}; top: ${conf.top}; ${isLeft ? 'left: -'+conf.width : 'right: -'+conf.width}; transform: ${conf.transform}; transform-origin: ${conf.origin}; flex-direction: ${isLeft ? 'row-reverse' : 'row'};">
-                    <div class="post-it" style="transform: ${antiRotate}; ${isLeft ? 'margin-left: 10px;' : 'margin-right: 10px;'}">${task.name}</div>
-                    <div class="blossom-node ${levelClass}"></div>
-                </div>`;
             });
-
-            if (allCompletedToday) face.innerText = '😊';
-            else if (tasks.some(t => t.streak === 0 && !t.completedToday)) face.innerText = '😢';
-            else face.innerText = '😐';
-
-            generatePetals(totalStreak);
         }
 
+        // The Engine that draws the tree using SVG Paths
+        function renderProceduralTree() {
+            const svg = document.getElementById('tree-svg');
+            const overlay = document.getElementById('tree-overlay');
+            
+            // Mathematical setup
+            const width = 500; // Fixed viewBox width
+            const centerX = width / 2;
+            const branchVerticalSpacing = 65; // Distance between branches
+            const baseTrunkHeight = 150;
+            const topPadding = 120; // Space for the top blossoms to fit
+            
+            // Infinite growth: calculate height based on number of tasks
+            const treeHeight = Math.max(500, baseTrunkHeight + (tasks.length * branchVerticalSpacing) + topPadding);
+            
+            // Set dynamically calculated dimensions
+            svg.setAttribute('viewBox', `0 0 ${width} ${treeHeight}`);
+            svg.style.height = `${treeHeight}px`;
+            overlay.style.height = `${treeHeight}px`;
+
+            let svgHTML = '';
+            let overlayHTML = '';
+            let totalStreak = 0;
+
+            if (tasks.length === 0) {
+                // Just a stump if no tasks
+                svgHTML = `<path d="M ${centerX} ${treeHeight} Q ${centerX + 10} ${treeHeight - 50} ${centerX} ${treeHeight - 80}" stroke="var(--tree-wood)" stroke-width="26" fill="none" stroke-linecap="round" />`;
+                svg.innerHTML = svgHTML;
+                overlay.innerHTML = '<div style="position:absolute; bottom:90px; width:100%; text-align:center; font-size:30px;">🌱</div>';
+                generatePetals(0);
+                return;
+            }
+
+            // 1. Draw the Main Trunk (slightly wavy based on height)
+            let trunkPath = `M ${centerX} ${treeHeight} `;
+            // Start curve
+            trunkPath += `Q ${centerX + 15} ${treeHeight - (treeHeight/3)} ${centerX} ${topPadding}`;
+            
+            svgHTML += `<path d="${trunkPath}" stroke="var(--tree-wood)" stroke-width="26" fill="none" stroke-linecap="round" />`;
+
+            // 2. Draw Branches & Blossoms
+            tasks.forEach((task, index) => {
+                totalStreak += task.streak;
+
+                // Calculate connection point on trunk
+                // Branches go from bottom to top as you add more
+                const branchStartY = treeHeight - baseTrunkHeight - (index * branchVerticalSpacing);
+                
+                // Alternate sides: left (-1) or right (1)
+                const side = (index % 2 === 0) ? -1 : 1; 
+
+                // Procedural variation for organic look
+                const branchLength = 80 + Math.random() * 50; 
+                const branchAngleRise = 30 + Math.random() * 40; 
+                
+                const branchEndX = centerX + (side * branchLength);
+                const branchEndY = branchStartY - branchAngleRise;
+
+                // Bezier Control Point (determines the curve of the branch)
+                const cpX = centerX + (side * branchLength * 0.5);
+                const cpY = branchStartY + 15; // dips slightly down before going up
+
+                // SVG Branch Path
+                svgHTML += `<path d="M ${centerX} ${branchStartY} Q ${cpX} ${cpY} ${branchEndX} ${branchEndY}" 
+                              stroke="var(--tree-highlight)" stroke-width="8" fill="none" stroke-linecap="round" />`;
+
+                // Calculate Visual Blossom based on Streak
+                let visual = '🍂';
+                let size = 1;
+                let glow = 'none';
+                
+                if (task.streak > 0) { visual = '🌿'; size = 1.2; }
+                if (task.streak >= 5) { visual = '🌸'; size = 1.4; glow = '0 0 10px rgba(255,183,197,0.6)'; }
+                if (task.streak >= 15) { visual = '🌸'; size = 1.8; glow = '0 0 20px #ff5e7e'; }
+                if (task.streak >= 30) { visual = '🌸'; size = 2.4; glow = '0 0 30px #ff5e7e, 0 0 15px #fff'; }
+
+                // HTML Overlay for Emoji and Labels
+                overlayHTML += `
+                    <div class="branch-node" style="left: ${branchEndX}px; top: ${branchEndY}px;">
+                        <div class="blossom" style="transform: scale(${size}); filter: drop-shadow(${glow});">${visual}</div>
+                        <div class="task-label ${side === -1 ? 'label-left' : 'label-right'}">${task.name} <span style="color:var(--accent-color)">(${task.streak})</span></div>
+                    </div>
+                `;
+            });
+
+            // Inject into DOM
+            svg.innerHTML = svgHTML;
+            overlay.innerHTML = overlayHTML;
+
+            // Update environment based on overall progress
+            generatePetals(totalStreak);
+            
+            // Auto-scroll the tree container to the top so you can see new growth
+            const treeArea = document.querySelector('.tree-area');
+            treeArea.scrollTop = 0;
+        }
+
+        // Particle System for falling petals
         function generatePetals(streakSum) {
             const container = document.getElementById('petalContainer');
             container.innerHTML = ''; 
             
             if (streakSum === 0) return;
 
-            let petalCount = Math.min(streakSum, 40);
+            // Cap visual particles to keep performance smooth, but scale them based on streak
+            let petalCount = Math.min(Math.floor(streakSum * 0.8), 50);
 
             for(let i=0; i < petalCount; i++) {
                 let petal = document.createElement('div');
                 petal.className = 'petal';
+                
+                // Random starting x position
                 petal.style.left = (Math.random() * 100) + '%';
                 
-                let fallDuration = (Math.random() * 4 + 4); 
-                let swayDuration = (Math.random() * 2 + 2);
-                let delay = Math.random() * 5;
+                // Randomize animation timings for organic flow
+                let fallDuration = (Math.random() * 6 + 4); 
+                let swayDuration = (Math.random() * 3 + 2);
+                let delay = Math.random() * 8; // spread out the drops
                 
                 petal.style.animationDuration = `${fallDuration}s, ${swayDuration}s`;
                 petal.style.animationDelay = `${delay}s, 0s`;
                 
-                let scale = Math.random() * 0.5 + 0.5;
+                // Vary petal size
+                let scale = Math.random() * 0.6 + 0.4;
                 petal.style.transform = `scale(${scale})`;
                 
                 container.appendChild(petal);
@@ -429,12 +589,16 @@
         }
 
         function addTask() {
-            const input = document.getElementById('taskName'), name = input.value.trim();
-            if(!name || tasks.length >= 6) return;
+            const input = document.getElementById('taskName');
+            const name = input.value.trim();
+            
+            // CAP REMOVED: No more limits on tasks!
+            if(!name) return; 
+            
             tasks.push({ name: name, streak: 0, completedToday: false }); 
             input.value = ''; 
             updateUI();
-            saveTasks(); // Save to DB!
+            saveTasks(); 
         }
 
         function completeTask(index) { 
@@ -442,16 +606,19 @@
                 tasks[index].completedToday = true; 
                 tasks[index].streak++; 
                 updateUI(); 
-                saveTasks(); // Save to DB!
+                saveTasks(); 
             } 
         }
 
         function simulateNextDay() {
+            // Loop backward so we can safely remove dead branches without breaking index
             for(let i = tasks.length - 1; i >= 0; i--) {
                 let t = tasks[i];
                 if(!t.completedToday) {
-                    if(t.streak >= 20) t.streak = 19; 
-                    else if(t.streak >= 10) t.streak = 9; 
+                    // Penalty system
+                    if(t.streak >= 30) t.streak = 25; 
+                    else if(t.streak >= 15) t.streak = 10; 
+                    else if(t.streak >= 5) t.streak = 2;
                     else t.streak = 0;
                     
                     if(t.streak === 0) { 
@@ -460,13 +627,14 @@
                         continue; 
                     }
                 }
+                // Reset flag for the new day
                 t.completedToday = false;
             }
             updateUI();
-            saveTasks(); // Save to DB!
+            saveTasks(); 
         }
 
-        // Init
+        // Init App
         checkSession();
     </script>
 </body>
