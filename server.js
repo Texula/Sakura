@@ -27,7 +27,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
     else console.log("✅ Baza de date SQLite Sakura este conectată și securizată în /data.");
 });
 
-// Crearea tabelului pentru utilizatori dacă nu există
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,6 +35,11 @@ db.serialize(() => {
         color TEXT,
         token TEXT
     )`);
+
+    // Migration: Add tasks column for existing databases without losing data
+    db.run(`ALTER TABLE users ADD COLUMN tasks TEXT DEFAULT '[]'`, (err) => {
+        // We ignore the error here because it just means the column already exists
+    });
 });
 
 // --- RUTE DE AUTENTIFICARE (API) ---
@@ -45,7 +49,7 @@ app.post('/api/register', (req, res) => {
     const { username, password, color } = req.body;
     
     if (!username || !password) {
-        return res.status(400).json({ error: "Completează toate câmpurile obligatorii!" });
+        return res.status(400).json({ error: "Fill in all required fields!" });
     }
 
     // Criptăm parola folosind bcryptjs (la fel ca pe serverul principal hreniuc.net)
@@ -54,11 +58,11 @@ app.post('/api/register', (req, res) => {
     db.run("INSERT INTO users (username, password, color) VALUES (?, ?, ?)", [username, hash, color || '#bb86fc'], function(err) {
         if (err) {
             if (err.message.includes('UNIQUE')) {
-                return res.status(400).json({ error: "Acest username există deja în baza de date!" });
+                return res.status(400).json({ error: "This username already exists!" });
             }
-            return res.status(500).json({ error: "Eroare internă la salvarea în baza de date." });
+            return res.status(500).json({ error: "Internal error saving to database." });
         }
-        res.json({ success: true, message: "Contul tău a fost creat cu succes! Te poți loga." });
+        res.json({ success: true, message: "Account created successfully! You can log in." });
     });
 });
 
@@ -67,29 +71,30 @@ app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({ error: "Introdu username-ul și parola!" });
+        return res.status(400).json({ error: "Enter username and password!" });
     }
 
     db.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
-        if (err) return res.status(500).json({ error: "Eroare la interogarea bazei de date." });
+        if (err) return res.status(500).json({ error: "Database query error." });
         
         // Verificăm dacă utilizatorul există și dacă parola se potrivește cu hash-ul stocat
         if (!user || !bcrypt.compareSync(password, user.password)) {
-            return res.status(401).json({ error: "Username sau parolă incorecte." });
+            return res.status(401).json({ error: "Incorrect username or password." });
         }
 
         // Generăm un token securizat de sesiune pe bază de caractere hexazecimale
         const token = crypto.randomBytes(32).toString('hex');
         
         db.run("UPDATE users SET token = ? WHERE id = ?", [token, user.id], (updateErr) => {
-            if (updateErr) return res.status(500).json({ error: "Eroare la generarea sesiunii utilizatorului." });
+            if (updateErr) return res.status(500).json({ error: "Error generating user session." });
             
             // Trimitem token-ul și datele de profil salvate înapoi la frontend
             res.json({ 
                 success: true, 
                 token: token, 
                 username: user.username, 
-                color: user.color 
+                color: user.color,
+                tasks: JSON.parse(user.tasks || '[]')
             });
         });
     });
@@ -100,15 +105,30 @@ app.post('/api/verify', (req, res) => {
     const { token } = req.body;
     if (!token) return res.json({ valid: false });
 
-    db.get("SELECT username, color FROM users WHERE token = ?", [token], (err, user) => {
+    db.get("SELECT username, color, tasks FROM users WHERE token = ?", [token], (err, user) => {
         if (err || !user) {
             res.json({ valid: false });
         } else {
-            res.json({ valid: true, username: user.username, color: user.color });
+            res.json({ 
+                valid: true, 
+                username: user.username, 
+                color: user.color,
+                tasks: JSON.parse(user.tasks || '[]')
+            });
         }
     });
 });
 
+// 4. Salvare Obiceiuri (Save Tasks)
+app.post('/api/save-tasks', (req, res) => {
+    const { token, tasks } = req.body;
+    if (!token) return res.status(401).json({ success: false, error: "Unauthorized" });
+
+    db.run("UPDATE users SET tasks = ? WHERE token = ?", [JSON.stringify(tasks), token], (err) => {
+        if (err) return res.status(500).json({ success: false, error: "Database error" });
+        res.json({ success: true });
+    });
+});
 // --- SERVIREA INTERFEȚEI WEB ---
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

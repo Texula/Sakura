@@ -1,53 +1,203 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sakura App</title>
-    <!-- Legăm noul fișier CSS pentru arta arboricolă -->
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ==============================================================
+           VARIABLES & BASE RESET
+        ============================================================== */
+        :root {
+            --accent-color: #ffb7c5; 
+            --accent-hover: #ff8da1;
+            --glass-bg: rgba(20, 15, 20, 0.65);
+            --glass-border: rgba(255, 183, 197, 0.2);
+            --tree-wood: #2d1616;
+            --tree-highlight: #4a2525;
+        }
+
+        body {
+            margin: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at bottom center, #2b1320 0%, #0a0508 100%);
+            color: #e0e0e0; 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        /* ==============================================================
+           UI ELEMENTS (GLASS PANELS)
+        ============================================================== */
+        .glass-panel {
+            background: var(--glass-bg); 
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); 
+            border-radius: 20px;
+            padding: 30px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            width: 100%; 
+            max-width: 400px; 
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        input {
+            width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px;
+            background: rgba(0,0,0,0.5); border: 1px solid #444; color: #fff; box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        input:focus { border-color: var(--accent-color); outline: none; box-shadow: 0 0 8px rgba(255, 183, 197, 0.3); }
+
+        button {
+            width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold;
+            background: var(--accent-color); color: #2d1616; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        button:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 183, 197, 0.4); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .switch-link { color: var(--accent-color); cursor: pointer; font-size: 0.9em; margin-top: 15px; display: block; }
+        .switch-link:hover { text-decoration: underline; color: var(--accent-hover); }
+
+        /* ==============================================================
+           APP STRUCTURE (DASHBOARD & TREE)
+        ============================================================== */
+        #app-screen { 
+            display: none; max-width: 1000px; width: 95%; gap: 40px; 
+            flex-wrap: wrap; justify-content: center; align-items: stretch; 
+        }
+        .dashboard { flex: 1; min-width: 320px; text-align: left; }
+        .header-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-logout { background: #cf6679; width: auto; padding: 8px 15px; color: white;}
+
+        /* ==============================================================
+           🌸 SAKURA TREE ART 🌸
+        ============================================================== */
+        .tree-area { 
+            flex: 1.5; min-width: 350px; height: 550px; 
+            display: flex; align-items: flex-end; justify-content: center; 
+            position: relative;
+            background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 20%);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .trunk { 
+            width: 60px; height: 250px; 
+            background: linear-gradient(90deg, var(--tree-wood) 0%, var(--tree-highlight) 50%, var(--tree-wood) 100%); 
+            border-radius: 10px 10px 0 0; 
+            position: relative; 
+            z-index: 5;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5) inset;
+        }
+
+        .face { 
+            position: absolute; top: 30%; left: 50%; transform: translateX(-50%); 
+            font-size: 26px; text-shadow: 0 0 5px rgba(0,0,0,0.8);
+        }
+
+        .branch { 
+            position: absolute; 
+            background: linear-gradient(0deg, var(--tree-wood) 0%, var(--tree-highlight) 100%); 
+            height: 12px; border-radius: 6px; 
+            display: flex; align-items: center; justify-content: flex-end; 
+            transition: all 0.8s ease; 
+            box-shadow: 0 5px 10px rgba(0,0,0,0.4);
+        }
+
+        .blossom-node {
+            position: absolute;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            transition: all 1s ease-in-out;
+        }
+
+        .level-0 { background: transparent; }
+        .level-1 { background: radial-gradient(circle, #ffb7c5 40%, transparent 60%); box-shadow: 0 0 10px rgba(255,183,197,0.5); transform: scale(2); }
+        .level-2 { background: radial-gradient(circle, #ff8da1 30%, #ffb7c5 60%, transparent 70%); box-shadow: 0 0 20px rgba(255,141,161,0.8), 0 0 40px rgba(255,183,197,0.4); transform: scale(3.5); }
+        .level-3 { background: radial-gradient(circle, #ff5e7e 30%, #ff8da1 50%, transparent 70%); box-shadow: 0 0 30px #ff5e7e, 0 0 60px #ff8da1, 0 0 80px rgba(255,183,197,0.5); transform: scale(5); }
+
+        .post-it { 
+            position: absolute; 
+            background: rgba(20, 15, 20, 0.85); 
+            border: 1px solid var(--accent-color); 
+            padding: 4px 8px; font-size: 11px; font-weight: bold; color: #fff; 
+            border-radius: 6px; white-space: nowrap; 
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .petal { 
+            position: absolute; 
+            background: linear-gradient(135deg, #ffb7c5, #ff8da1); 
+            border-radius: 15px 0 15px 0; 
+            width: 12px; height: 16px; 
+            opacity: 0.8; 
+            z-index: 1; 
+            pointer-events: none; 
+            animation: fall linear infinite, sway ease-in-out infinite alternate; 
+            box-shadow: 0 0 5px rgba(255,183,197,0.5);
+        }
+
+        @keyframes fall { 
+            0% { top: -10%; opacity: 0; } 
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { top: 110%; opacity: 0; } 
+        }
+        @keyframes sway { 
+            0% { transform: translateX(0) rotate(0deg); } 
+            100% { transform: translateX(80px) rotate(60deg); } 
+        }
+    </style>
 </head>
 <body>
 
     <!-- LOGIN SCREEN -->
     <div id="login-screen" class="glass-panel">
         <h2 style="color: var(--accent-color); margin-top: 0; font-size: 2em;">🌸 Sakura</h2>
-        <input type="text" id="logUser" placeholder="Nume utilizator" onkeypress="if(event.key === 'Enter') doLogin()">
-        <input type="password" id="logPass" placeholder="Parolă" onkeypress="if(event.key === 'Enter') doLogin()">
-        <button id="btnLogin" onclick="doLogin()">Autentificare</button>
-        <span class="switch-link" onclick="showScreen('register-screen')">Nu ai cont? Creează-ți Grădina</span>
+        <input type="text" id="logUser" placeholder="Username" onkeypress="if(event.key === 'Enter') doLogin()">
+        <input type="password" id="logPass" placeholder="Password" onkeypress="if(event.key === 'Enter') doLogin()">
+        <button id="btnLogin" onclick="doLogin()">Log In</button>
+        <span class="switch-link" onclick="showScreen('register-screen')">Don't have an account? Create your Garden</span>
     </div>
 
     <!-- REGISTER SCREEN -->
     <div id="register-screen" class="glass-panel" style="display: none;">
-        <h2 style="color: var(--accent-color); margin-top: 0;">Creează Grădină</h2>
-        <input type="text" id="regUser" placeholder="Nume utilizator" onkeypress="if(event.key === 'Enter') doRegister()">
-        <input type="password" id="regPass" placeholder="Parolă" onkeypress="if(event.key === 'Enter') doRegister()">
-        <div style="text-align: left; margin-bottom: 5px; color: #aaa; font-size: 0.9em;">Culoare profil:</div>
+        <h2 style="color: var(--accent-color); margin-top: 0;">Create Garden</h2>
+        <input type="text" id="regUser" placeholder="Username" onkeypress="if(event.key === 'Enter') doRegister()">
+        <input type="password" id="regPass" placeholder="Password" onkeypress="if(event.key === 'Enter') doRegister()">
+        <div style="text-align: left; margin-bottom: 5px; color: #aaa; font-size: 0.9em;">Profile color:</div>
         <input type="color" id="regColor" value="#ffb7c5" style="padding: 2px; height: 40px; cursor: pointer; border-radius: 8px;">
-        <button id="btnRegister" onclick="doRegister()">Înregistrare</button>
-        <span class="switch-link" onclick="showScreen('login-screen')">Înapoi la Autentificare</span>
+        <button id="btnRegister" onclick="doRegister()">Sign Up</button>
+        <span class="switch-link" onclick="showScreen('login-screen')">Back to Log In</span>
     </div>
 
     <!-- APP SCREEN -->
     <div id="app-screen">
         <div class="header-bar">
-            <h2>Bun venit, <span id="welcome-name" style="color: var(--accent-color);"></span>!</h2>
-            <button class="btn-logout" onclick="doLogout()">Deconectare</button>
+            <h2>Welcome, <span id="welcome-name" style="color: var(--accent-color);"></span>!</h2>
+            <button class="btn-logout" onclick="doLogout()">Logout</button>
         </div>
 
         <div class="glass-panel dashboard">
-            <h3 style="margin-top: 0;">Obiceiuri Zilnice (Max 6)</h3>
+            <h3 style="margin-top: 0;">Daily Routines (Max 6)</h3>
             <div style="display:flex; gap:10px; margin-bottom: 20px;">
-                <input type="text" id="taskName" placeholder="Ex: Sală, Citit, Apă" style="margin:0;" onkeypress="if(event.key === 'Enter') addTask()">
-                <button onclick="addTask()" style="width: auto; padding: 0 20px;">Adaugă</button>
+                <input type="text" id="taskName" placeholder="Ex: Gym, Reading, Water" style="margin:0;" onkeypress="if(event.key === 'Enter') addTask()">
+                <button onclick="addTask()" style="width: auto; padding: 0 20px;">Add</button>
             </div>
             
             <div id="taskList" style="display: flex; flex-direction: column; gap: 12px;"></div>
             
-            <!-- Butonul ascuns, disponibil doar pentru admin/matei/test -->
+            <!-- Hidden button, only for admin/matei/test -->
             <button id="btn-simulate" onclick="simulateNextDay()" style="display: none; margin-top: 30px; background: transparent; border: 1px dashed var(--accent-color); color: var(--accent-color);">
-                ⏩ Simulează Ziua Următoare (Test)
+                ⏩ Simulate Next Day (Test)
             </button>
         </div>
 
@@ -56,24 +206,37 @@
             <div class="trunk" id="treeTrunk">
                 <div class="face" id="treeFace">😴</div>
             </div>
-            <!-- Container pentru petalele animate -->
             <div id="petalContainer"></div>
         </div>
     </div>
 
     <script>
-        // --- 1. LOGICĂ DE AUTENTIFICARE ȘI PERMISIUNI ---
+        // --- 1. AUTHENTICATION & PERMISSIONS ---
         const ALLOWED_ADMINS = ['admin', 'matei', 'test'];
         let currentUser = "";
+        let tasks = []; // State array is populated from the DB now
 
         function evaluatePermissions(username) {
             currentUser = username;
             const btnSimulate = document.getElementById('btn-simulate');
-            // Verificăm ignorând majusculele/minusculele
             if (ALLOWED_ADMINS.includes(username.toLowerCase())) {
                 btnSimulate.style.display = 'block';
             } else {
                 btnSimulate.style.display = 'none';
+            }
+        }
+
+        async function saveTasks() {
+            const token = localStorage.getItem('sakura_token');
+            if (!token) return;
+            try {
+                await fetch('/api/save-tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, tasks })
+                });
+            } catch (error) {
+                console.error("Failed to sync tasks to database:", error);
             }
         }
 
@@ -87,6 +250,7 @@
                 
                 if(data.valid) {
                     document.getElementById('welcome-name').innerText = data.username;
+                    tasks = data.tasks || []; // Load saved tasks!
                     evaluatePermissions(data.username);
                     showScreen('app-screen');
                     updateUI(); 
@@ -95,7 +259,7 @@
                     showScreen('login-screen');
                 }
             } catch (error) {
-                console.error("Eroare la verificare:", error);
+                console.error("Session verification error:", error);
                 showScreen('login-screen');
             }
         }
@@ -105,10 +269,10 @@
             const p = document.getElementById('logPass').value;
             const btn = document.getElementById('btnLogin');
 
-            if(!u || !p) return alert("Introdu username și parola!");
+            if(!u || !p) return alert("Enter username and password!");
 
             btn.disabled = true;
-            btn.innerText = "Se încarcă...";
+            btn.innerText = "Loading...";
 
             try {
                 const res = await fetch('/api/login', { 
@@ -121,15 +285,16 @@
                 
                 if(data.success) { 
                     localStorage.setItem('sakura_token', data.token); 
+                    tasks = data.tasks || []; // Load saved tasks!
                     checkSession(); 
                 } else {
-                    alert(data.error || "Eroare la logare.");
+                    alert(data.error || "Login error.");
                 }
             } catch (error) {
-                alert("Eroare server. Verifică Podman-ul.");
+                alert("Server error. Check Podman logs.");
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Autentificare";
+                btn.innerText = "Log In";
             }
         }
 
@@ -139,10 +304,10 @@
             const c = document.getElementById('regColor').value;
             const btn = document.getElementById('btnRegister');
 
-            if(!u || !p) return alert("Completează username și parola!");
+            if(!u || !p) return alert("Fill in username and password!");
 
             btn.disabled = true;
-            btn.innerText = "Se încarcă...";
+            btn.innerText = "Loading...";
 
             try {
                 const res = await fetch('/api/register', { 
@@ -156,13 +321,13 @@
                     alert(data.message); 
                     showScreen('login-screen'); 
                 } else {
-                    alert(data.error || "Eroare la înregistrare.");
+                    alert(data.error || "Registration error.");
                 }
             } catch (error) {
-                alert("Eroare server.");
+                alert("Server error.");
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Înregistrare";
+                btn.innerText = "Sign Up";
             }
         }
 
@@ -173,10 +338,8 @@
             document.getElementById(id).style.display = (id==='app-screen')?'flex':'block'; 
         }
 
-        // --- 2. LOGICĂ ARBORE SAKURA ȘI UI ---
-        let tasks = [];
+        // --- 2. SAKURA TREE LOGIC & UI ---
 
-        // Configurarea pozițiilor fizice ale ramurilor pe trunchi (pentru a arăta natural)
         const branchConfig = [
             { width: '120px', top: '30px', side: 'left', transform: 'rotate(-35deg)', origin: 'right center' },
             { width: '110px', top: '60px', side: 'right', transform: 'rotate(25deg)', origin: 'left center' },
@@ -192,14 +355,12 @@
             const face = document.getElementById('treeFace');
             
             taskList.innerHTML = '';
-            
-            // Curățăm ramurile vechi
             Array.from(trunk.children).forEach(child => { if(child.id !== 'treeFace') trunk.removeChild(child); });
 
             if(tasks.length === 0) { 
-                taskList.innerHTML = '<div style="color:#888; text-align:center;">Niciun obicei creat încă. Începe să îți crești grădina!</div>'; 
+                taskList.innerHTML = '<div style="color:#888; text-align:center;">No routines created yet. Start growing your garden!</div>'; 
                 face.innerText = '😴'; 
-                generatePetals(0); // Curățăm petalele
+                generatePetals(0); 
                 return; 
             }
 
@@ -210,26 +371,20 @@
                 if(!task.completedToday) allCompletedToday = false;
                 totalStreak += task.streak;
 
-                // Randare listă UI
                 taskList.innerHTML += `
                 <div style="background:rgba(0,0,0,0.3); padding:12px; border-left:4px solid ${task.completedToday ? '#4caf50' : 'var(--accent-color)'}; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <b style="font-size:1.1em;">${task.name}</b><br>
-                        <small style="color:#aaa;">🔥 Seria: ${task.streak} zile</small>
+                        <small style="color:#aaa;">🔥 Streak: ${task.streak} days</small>
                     </div>
                     <button onclick="completeTask(${index})" style="width:auto; padding:8px 15px; background:${task.completedToday ? '#4caf50' : 'transparent'}; border:2px solid ${task.completedToday ? '#4caf50' : 'var(--accent-color)'}; color:${task.completedToday ? '#fff' : 'var(--accent-color)'}" ${task.completedToday ? 'disabled' : ''}>
-                        ${task.completedToday ? 'Irigat ✓' : 'Udă 💧'}
+                        ${task.completedToday ? 'Watered ✓' : 'Water 💧'}
                     </button>
                 </div>`;
 
-                // Calculare nivel înflorire pentru CSS
                 let levelClass = task.streak >= 20 ? 'level-3' : task.streak >= 10 ? 'level-2' : task.streak > 0 ? 'level-1' : 'level-0';
-                
-                // Construirea ramurii fizice cu artă CSS
                 let conf = branchConfig[index];
                 let isLeft = conf.side === 'left';
-                
-                // Corectăm textul să nu stea cu capul în jos
                 let antiRotate = isLeft ? `rotate(35deg)` : `rotate(-25deg)`;
 
                 trunk.innerHTML += `
@@ -239,30 +394,26 @@
                 </div>`;
             });
 
-            // Reacții ale copacului
             if (allCompletedToday) face.innerText = '😊';
             else if (tasks.some(t => t.streak === 0 && !t.completedToday)) face.innerText = '😢';
             else face.innerText = '😐';
 
-            // Generăm ploaia de petale proporțional cu seria totală
             generatePetals(totalStreak);
         }
 
         function generatePetals(streakSum) {
             const container = document.getElementById('petalContainer');
-            container.innerHTML = ''; // Reset
+            container.innerHTML = ''; 
             
             if (streakSum === 0) return;
 
-            // Maxim 40 de petale pe ecran pentru performanță
             let petalCount = Math.min(streakSum, 40);
 
             for(let i=0; i < petalCount; i++) {
                 let petal = document.createElement('div');
                 petal.className = 'petal';
-                // Generare random pentru naturalețe
                 petal.style.left = (Math.random() * 100) + '%';
-                // Viteza de cădere și balansare random
+                
                 let fallDuration = (Math.random() * 4 + 4); 
                 let swayDuration = (Math.random() * 2 + 2);
                 let delay = Math.random() * 5;
@@ -270,7 +421,6 @@
                 petal.style.animationDuration = `${fallDuration}s, ${swayDuration}s`;
                 petal.style.animationDelay = `${delay}s, 0s`;
                 
-                // Variem dimensiunea un pic
                 let scale = Math.random() * 0.5 + 0.5;
                 petal.style.transform = `scale(${scale})`;
                 
@@ -284,6 +434,7 @@
             tasks.push({ name: name, streak: 0, completedToday: false }); 
             input.value = ''; 
             updateUI();
+            saveTasks(); // Save to DB!
         }
 
         function completeTask(index) { 
@@ -291,10 +442,10 @@
                 tasks[index].completedToday = true; 
                 tasks[index].streak++; 
                 updateUI(); 
+                saveTasks(); // Save to DB!
             } 
         }
 
-        // Această funcție o vede doar admin/matei/test acum
         function simulateNextDay() {
             for(let i = tasks.length - 1; i >= 0; i--) {
                 let t = tasks[i];
@@ -304,7 +455,7 @@
                     else t.streak = 0;
                     
                     if(t.streak === 0) { 
-                        alert(`Ramura "${t.name}" s-a ofilit și a căzut! 🍂`); 
+                        alert(`Branch "${t.name}" withered and fell! 🍂`); 
                         tasks.splice(i, 1); 
                         continue; 
                     }
@@ -312,6 +463,7 @@
                 t.completedToday = false;
             }
             updateUI();
+            saveTasks(); // Save to DB!
         }
 
         // Init
