@@ -1,0 +1,178 @@
+/* ==============================================================
+   VARIABILE ȘI RESETARE BAZĂ
+============================================================== */
+:root {
+    --accent-color: #ffb7c5; /* Roz Sakura */
+    --accent-hover: #ff8da1;
+    --glass-bg: rgba(20, 15, 20, 0.65);
+    --glass-border: rgba(255, 183, 197, 0.2);
+    --tree-wood: #2d1616;
+    --tree-highlight: #4a2525;
+}
+
+body {
+    margin: 0; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Un fundal de noapte care se îmbină perfect cu rozul Sakura */
+    background: radial-gradient(circle at bottom center, #2b1320 0%, #0a0508 100%);
+    color: #e0e0e0; 
+    min-height: 100vh; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    overflow-x: hidden;
+}
+
+/* ==============================================================
+   ELEMENTE UI (PANOURI DE STICLĂ)
+============================================================== */
+.glass-panel {
+    background: var(--glass-bg); 
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border); 
+    border-radius: 20px;
+    padding: 30px; 
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+    width: 100%; 
+    max-width: 400px; 
+    text-align: center;
+    position: relative;
+    z-index: 10;
+}
+
+input {
+    width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px;
+    background: rgba(0,0,0,0.5); border: 1px solid #444; color: #fff; box-sizing: border-box;
+    transition: all 0.3s;
+}
+input:focus { border-color: var(--accent-color); outline: none; box-shadow: 0 0 8px rgba(255, 183, 197, 0.3); }
+
+button {
+    width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold;
+    background: var(--accent-color); color: #2d1616; cursor: pointer; transition: 0.3s;
+    text-transform: uppercase; letter-spacing: 1px;
+}
+button:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 183, 197, 0.4); }
+button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.switch-link { color: var(--accent-color); cursor: pointer; font-size: 0.9em; margin-top: 15px; display: block; }
+.switch-link:hover { text-decoration: underline; color: var(--accent-hover); }
+
+/* ==============================================================
+   STRUCTURĂ APLICAȚIE (DASHBOARD & TREE)
+============================================================== */
+#app-screen { 
+    display: none; max-width: 1000px; width: 95%; gap: 40px; 
+    flex-wrap: wrap; justify-content: center; align-items: stretch; 
+}
+.dashboard { flex: 1; min-width: 320px; text-align: left; }
+.header-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.btn-logout { background: #cf6679; width: auto; padding: 8px 15px; color: white;}
+
+/* ==============================================================
+   🌸 SAKURA TREE ART (DOAR CSS!) 🌸
+============================================================== */
+.tree-area { 
+    flex: 1.5; min-width: 350px; height: 550px; 
+    display: flex; align-items: flex-end; justify-content: center; 
+    position: relative;
+    background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 20%);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+/* Trunchiul - textură de lemn din gradient */
+.trunk { 
+    width: 60px; height: 250px; 
+    background: linear-gradient(90deg, var(--tree-wood) 0%, var(--tree-highlight) 50%, var(--tree-wood) 100%); 
+    border-radius: 10px 10px 0 0; 
+    position: relative; 
+    z-index: 5;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.5) inset;
+}
+
+.face { 
+    position: absolute; top: 30%; left: 50%; transform: translateX(-50%); 
+    font-size: 26px; text-shadow: 0 0 5px rgba(0,0,0,0.8);
+}
+
+/* Ramurile copacului */
+.branch { 
+    position: absolute; 
+    background: linear-gradient(0deg, var(--tree-wood) 0%, var(--tree-highlight) 100%); 
+    height: 12px; border-radius: 6px; 
+    display: flex; align-items: center; justify-content: flex-end; 
+    transition: all 0.8s ease; 
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4);
+}
+
+/* Nodurile de ramură (unde stau florile) */
+.blossom-node {
+    position: absolute;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    transition: all 1s ease-in-out;
+}
+
+/* 🍂 Nivel 0 (Fără flori) */
+.level-0 { background: transparent; }
+
+/* 🌱 Nivel 1 (Muguri) */
+.level-1 { 
+    background: radial-gradient(circle, #ffb7c5 40%, transparent 60%); 
+    box-shadow: 0 0 10px rgba(255,183,197,0.5); 
+    transform: scale(2); 
+}
+
+/* 🌸 Nivel 2 (Flori deschise) */
+.level-2 { 
+    background: radial-gradient(circle, #ff8da1 30%, #ffb7c5 60%, transparent 70%); 
+    box-shadow: 0 0 20px rgba(255,141,161,0.8), 0 0 40px rgba(255,183,197,0.4); 
+    transform: scale(3.5); 
+}
+
+/* 🍒 Nivel 3 (Coroană plină) */
+.level-3 { 
+    background: radial-gradient(circle, #ff5e7e 30%, #ff8da1 50%, transparent 70%); 
+    box-shadow: 0 0 30px #ff5e7e, 0 0 60px #ff8da1, 0 0 80px rgba(255,183,197,0.5); 
+    transform: scale(5); 
+}
+
+/* Eticheta Obiceiului atașată de ramură */
+.post-it { 
+    position: absolute; 
+    background: rgba(20, 15, 20, 0.85); 
+    border: 1px solid var(--accent-color); 
+    padding: 4px 8px; font-size: 11px; font-weight: bold; color: #fff; 
+    border-radius: 6px; white-space: nowrap; 
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+/* ==============================================================
+   ANIMAȚIE PETALE DE SAKURA (CSS ARTIFICIAL WIND)
+============================================================== */
+.petal { 
+    position: absolute; 
+    background: linear-gradient(135deg, #ffb7c5, #ff8da1); 
+    /* Magia border-radius: două colțuri ascuțite, două rotunde = PETALĂ! */
+    border-radius: 15px 0 15px 0; 
+    width: 12px; height: 16px; 
+    opacity: 0.8; 
+    z-index: 1; 
+    pointer-events: none; /* Să poți da click prin ele */
+    animation: fall linear infinite, sway ease-in-out infinite alternate; 
+    box-shadow: 0 0 5px rgba(255,183,197,0.5);
+}
+
+@keyframes fall { 
+    0% { top: -10%; opacity: 0; } 
+    10% { opacity: 0.8; }
+    90% { opacity: 0.8; }
+    100% { top: 110%; opacity: 0; } 
+}
+@keyframes sway { 
+    0% { transform: translateX(0) rotate(0deg); } 
+    100% { transform: translateX(80px) rotate(60deg); } 
+}
