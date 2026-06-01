@@ -1,18 +1,18 @@
 FROM node:20-alpine
 
-# Setăm directorul de lucru
+# 1. Creăm folderul de lucru
 WORKDIR /usr/src/app
 
-# Instalam tool-urile necesare pentru a compila sqlite3 pe Alpine Linux
-RUN apk add --no-cache python3 make g++ sqlite
-
-# Copiem și instalăm dependențele
+# 2. Copiem DOAR fișierele de dependențe mai întâi
 COPY package*.json ./
+
+# 3. Instalăm dependențele (Această etapă va fi cache-uită dacă package.json nu se schimbă)
 RUN npm install
 
-# Copiem restul codului
+# 4. Acum copiem restul codului sursă
 COPY . .
 
+# Expunem portul
 EXPOSE 3000
 
 CMD ["npm", "start"]

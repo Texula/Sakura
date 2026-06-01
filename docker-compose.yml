@@ -13,4 +13,4 @@ services:
       - PORT=3000
     volumes:
       # AICI SALVĂM BAZA DE DATE - Așa nu se pierde la reconstrucția containerului!
-      - ./data:/usr/src/app/data
+      - ./data:/usr/src/app/data:Z
